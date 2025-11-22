@@ -21,14 +21,14 @@ function Bonito.jsrender(session::Session, editor::Editor)
         ui,
         js"""
     function (element){
-        const editor = $(ace).edit(element);
-        const language = $(editor.language[])
-        const langTools = $(ace).require("ace/ext/language_tools");
-        const langMode = $(ace).require("ace/mode/" + language);
-        const completers = $(editor.entries).map(function ({meta, words, score}) {
+        var editor = $(ace).edit(element);
+        var language = $(editor.language[])
+        var langTools = $(ace).require("ace/ext/language_tools");
+        var langMode = $(ace).require("ace/mode/" + language);
+        var completers = $(editor.entries).map(function ({meta, words, score}) {
             return {
                 getCompletions: function (editor, session, pos, prefix, callback) {
-                    let wordList = Bonito.get_observable(words);
+                    var wordList = Bonito.get_observable(words);
                     callback(null, wordList.map(function(word) {
                         return {
                             caption: word,
@@ -42,7 +42,7 @@ function Bonito.jsrender(session::Session, editor::Editor)
         });
         editor.session.setMode("ace/mode/" + language);
         editor.session.on("change", function () {
-            const value = editor.getValue();
+            var value = editor.getValue();
             Bonito.update_obs($(editor.value), value);
         });
         editor.setOptions({

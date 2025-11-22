@@ -7,9 +7,8 @@ function Bonito.jsrender(session::Session, fp::FilePicker)
     input = DOM.input(
         type="file",
         onchange=js"""
-            $(UtilitiesJS).readFiles(this.files, $(fp.files));
-            const text = [...this.files].map(file => file.name).join(' ');
-            text && Bonito.update_obs($(text), text);
+            window.utilities.readFiles(this.files, $(fp.files));
+            Bonito.update_obs($(text), [...this.files].map(file => file.name).join(' '));
         """,
         multiple=true,
         style="display:none;",

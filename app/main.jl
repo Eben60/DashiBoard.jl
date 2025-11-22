@@ -1,4 +1,5 @@
 using Pkg
+Pkg.activate(@__DIR__)
 Pkg.develop(; path=joinpath(@__FILE__, "../../") |> normpath)
 
 using PalmerPenguins, DataFrames

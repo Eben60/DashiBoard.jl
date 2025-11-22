@@ -12,8 +12,7 @@ function jsrender(session::Session, add::AddNewCard)
     hidden, keydown = add.list.hidden, add.list.keydown
     onfocus = js"Bonito.update_obs($(hidden), false);"
     onblur = js"""
-          const tgt = event.relatedTarget;
-          tgt && $(list).contains(tgt) || Bonito.update_obs($(hidden), true);
+          (event.relatedTarget && $(list).contains(event.relatedTarget)) || Bonito.update_obs($(hidden), true);
       """
     onkeydown = js"event.key == 'Escape' ? this.blur() : Bonito.update_obs($(keydown), event.key)"
     box = DOM.button(

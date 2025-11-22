@@ -28,7 +28,7 @@ function jsrender(session::Session, tabs::Tabs)
         activetab,
         js"""
     function (idx) {
-        $(UtilitiesJS).styleSelected($(nodes), idx - 1, $activeClasses, $inactiveClasses);
+        window.utilities.styleSelected($(nodes), idx - 1, $activeClasses, $inactiveClasses);
     }
 """
     )
