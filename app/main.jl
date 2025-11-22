@@ -1,3 +1,6 @@
+using Pkg
+Pkg.develop(; path=joinpath(@__FILE__, "../../") |> normpath)
+
 using PalmerPenguins, DataFrames
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 penguins = dropmissing(DataFrame(PalmerPenguins.load()))
