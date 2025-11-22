@@ -1,9 +1,9 @@
 Base.@kwdef struct List
     entries::Observable{SimpleList}
     value::Observable{String}
-    selected::Observable{Union{Int, Nothing}}=Observable{Union{Int, Nothing}}(nothing) # 0-based indexing
-    hidden::Observable{Bool}=Observable(true)
-    keydown::Observable{String}=Observable("")
+    selected::Observable{Union{Int,Nothing}} = Observable{Union{Int,Nothing}}(nothing) # 0-based indexing
+    hidden::Observable{Bool} = Observable(true)
+    keydown::Observable{String} = Observable("")
 end
 
 function List(keys::Observable{Vector{String}}, value::Observable{String}; kwargs...)
@@ -34,61 +34,69 @@ function jsrender(session::Session, l::List)
         style="position: absolute; left:0; right:0; top:0.5rem; overflow-y: scroll;"
     )
 
-    onjs(session, l.entries, js"""
-        function (entries) {
-            const keys = entries.map(e => e.key);
-            const values = entries.map(e => e.value);
-            const list = $(list);
-            const classes = $(itemClasses);
-            while (list.childNodes.length > keys.length) {
-                list.removeChild(list.lastChild);
-            }
-            for (let i = 0; i < keys.length; i++) {
-                if (i >= list.children.length) {
-                    const node = document.createElement("li");
-                    node.classList.add("cursor-pointer");
-                    node.role = "menuitem";
-                    node.tabIndex = -1;
-                    node.style.display = "block";
-                    node.onclick = function (event) {
-                        JSServe.update_obs($(l.value), event.target.dataset.value);
-                    };
-                    node.classList.add(...classes);
-                    list.appendChild(node);
-                }
-                const child = list.children[i];
-                child.innerText = keys[i];
-                child.dataset.value = values[i];
-            }
-            JSServe.update_obs($(selected), null);
+    onjs(
+        session,
+        l.entries,
+        js"""
+    function (entries) {
+        const keys = entries.map(e => e.key);
+        const values = entries.map(e => e.value);
+        const list = $(list);
+        const classes = $(itemClasses);
+        while (list.childNodes.length > keys.length) {
+            list.removeChild(list.lastChild);
         }
-    """)
+        for (let i = 0; i < keys.length; i++) {
+            if (i >= list.children.length) {
+                const node = document.createElement("li");
+                node.classList.add("cursor-pointer");
+                node.role = "menuitem";
+                node.tabIndex = -1;
+                node.style.display = "block";
+                node.onclick = function (event) {
+                    Bonito.update_obs($(l.value), event.target.dataset.value);
+                };
+                node.classList.add(...classes);
+                list.appendChild(node);
+            }
+            const child = list.children[i];
+            child.innerText = keys[i];
+            child.dataset.value = values[i];
+        }
+        Bonito.update_obs($(selected), null);
+    }
+"""
+    )
 
     # Add behavior when user presses key
-    onjs(session, l.keydown, js"""
-        function(key) {
-            const selected = JSServe.get_observable($(selected));
-            const children = $(list).children;
-            const len = children.length;
-            if (key == "ArrowDown") {
-                JSServe.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, 1))
-            } else if (key == "ArrowUp") {
-                JSServe.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, -1))
-            } else if (key == "Enter" || key == "Tab") {
-                if (selected !== null && len > 0) {
-                    const child = children[selected];
-                    JSServe.update_obs($(l.value), child.dataset.value);
-                }
+    onjs(
+        session,
+        l.keydown,
+        js"""
+    function(key) {
+        const selected = Bonito.get_observable($(selected));
+        const children = $(list).children;
+        const len = children.length;
+        if (key == "ArrowDown") {
+            Bonito.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, 1))
+        } else if (key == "ArrowUp") {
+            Bonito.update_obs($(selected), $(UtilitiesJS).cycle(selected, len, -1))
+        } else if (key == "Enter" || key == "Tab") {
+            if (selected !== null && len > 0) {
+                const child = children[selected];
+                Bonito.update_obs($(l.value), child.dataset.value);
             }
         }
-    """)
+    }
+"""
+    )
 
     # Style selected options
     onjs(session, selected, js"idx => $(UtilitiesJS).styleSelected($(list).children, idx, $activeClasses, $inactiveClasses)")
     # When out of focus, unselect
-    onjs(session, hidden, js"hidden => hidden && JSServe.update_obs($(selected), null)")
+    onjs(session, hidden, js"hidden => hidden && Bonito.update_obs($(selected), null)")
 
-    notify!(l.entries)
+    notify(l.entries)
 
     ui = DOM.div(list; style="position: relative; z-index: 1;", hidden)
     return jsrender(session, ui)

@@ -3,6 +3,8 @@ struct Pipelines <: AbstractVisualization
 end
 
 function layout(g::SimpleDiGraph)
+    nv(g) == 0 && return Point2f[]
+    nv(g) == 1 && return Point2f[(0, 0)]
     xs, ys, _ = solve_positions(Zarate(), g)
     return Point.(ys, -xs)
 end
@@ -18,7 +20,6 @@ function jsrender(session::Session, pipelines::Pipelines)
     palette = vcat(RGB(colorant"black"), Makie.current_default_theme().palette.color[])
     un = reduce(vcat, get_vertex_names.(pipelines.pipelines))
     uc = palette[eachindex(un)]
-    scale = AlgebraOfGraphics.CategoricalScale(un, uc, palette, "Step")
 
     nested_vertices = lift(output(last(pipelines.pipelines))) do _
         return get_vertices.(pipelines.pipelines)
@@ -26,7 +27,7 @@ function jsrender(session::Session, pipelines::Pipelines)
     g = @lift simpledigraph($nested_vertices)
 
     names = @lift mapreduce(get_vertex_names, append!, $nested_vertices)
-    node_color = @lift AlgebraOfGraphics.rescale($names, scale)
+    node_color = @lift palette[eachindex($names)]
     # work around https://github.com/JuliaPlots/GraphMakie.jl/issues/42 
     edge_color = @lift ne($g) > 0 ? :black : :transparent
     backgroundcolor = colorant"#F3F4F6"
@@ -38,12 +39,12 @@ function jsrender(session::Session, pipelines::Pipelines)
         points = layout(graph)
         xlims = extrema(first, points)
         ylims = extrema(last, points)
-        xlims!(ax, xlims[1] - 0.25,  xlims[2] + 0.25)
-        ylims!(ax, ylims[1] - 0.25,  ylims[2] + 0.25)
+        xlims!(ax, xlims[1] - 0.25, xlims[2] + 0.25)
+        ylims!(ax, ylims[1] - 0.25, ylims[2] + 0.25)
     end
-    notify!(g)
+    notify(g)
     graphplot!(ax, g;
-        arrow_show=true, arrow_size, 
+        arrow_show=true, arrow_size,
         edge_width, edge_color,
         node_size, node_color,
         layout
@@ -53,8 +54,8 @@ function jsrender(session::Session, pipelines::Pipelines)
 
     Legend(
         fig[1, 2],
-        [MarkerElement(; color, marker=:circle, markersize=legend_node_size) for color in scale.plot],
-        string.(scale.data), scale.label
+        [MarkerElement(; color, marker=:circle, markersize=legend_node_size) for color in uc],
+        string.(un), "Step"
     )
     colgap!(fig.layout, colgap)
     on_pixelratio(session, once=true) do pr

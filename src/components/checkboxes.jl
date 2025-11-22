@@ -1,10 +1,10 @@
 struct Option{T}
-    key::String
+    key::AbstractString
     value::T
     selected::Observable{Bool}
 end
 
-Option(key::String, value, selected::Bool=true) = Option(key::String, value, Observable(selected))
+Option(key::AbstractString, value, selected::Bool=true) = Option(key, value, Observable(selected))
 
 struct Checkboxes{T}
     options::Vector{Option{T}}
@@ -23,10 +23,10 @@ function reset!(wdg::Checkboxes)
     end
 end
 
-function jsrender(session::Session, wdg::Checkboxes)
+function Bonito.jsrender(session::Session, wdg::Checkboxes)
     list = map(wdg.options) do option
         k, v, s = option.key, option.value, option.selected
-        update = js"JSServe.update_obs($s, this.checked)"
+        update = js"Bonito.update_obs($s, this.checked)"
         return DOM.label(
             DOM.input(
                 class="form-checkbox",

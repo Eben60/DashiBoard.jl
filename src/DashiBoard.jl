@@ -2,10 +2,10 @@ module DashiBoard
 
 using Observables
 using Observables: to_value, AbstractObservable
-using JSServe
-using JSServe: evaljs, onjs, onload, Table, Server
+using Bonito
+using Bonito: evaljs, onjs, onload, Table, Server
 import Tables, CSV
-import JSServe: jsrender
+import Bonito: jsrender
 using Sockets
 using StructArrays: uniquesorted, finduniquesorted, components, StructArray
 using Makie: plot!, RGB, Axis, Scene, Figure, Makie
@@ -17,12 +17,12 @@ using AlgebraOfGraphics: density, Layers
 using Statistics: mean, std, Statistics
 using StatsBase: histrange, fit, quantile, StatsBase
 using MultivariateStats: PCA,
-                         PPCA,
-                         FactorAnalysis,
-                         ICA,
-                         classical_mds,
-                         transform
-using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, topological_sort_by_dfs
+    PPCA,
+    FactorAnalysis,
+    ICA,
+    classical_mds,
+    transform
+using Graphs: SimpleDiGraph, add_edge!, inneighbors, ne, nv, topological_sort_by_dfs
 using LayeredLayouts, GraphMakie
 using Distances: Euclidean, pairwise
 using REPL: levenshtein
@@ -38,41 +38,34 @@ export set_aog_theme!, update_theme!
 WGLMakie.activate!()
 
 function dependency_path(fn)
-    return if hasmethod(JSServe.Asset, Tuple{RelocatableFolders.Path})
+    return if hasmethod(Bonito.Asset, Tuple{RelocatableFolders.Path})
         @path joinpath(dirname(@__DIR__), "js_dependencies", fn)
     else
         joinpath(dirname(@__DIR__), "js_dependencies", fn)
     end
 end
 
-const FormsCSS = JSServe.Asset(dependency_path("forms.min.css"))
-const TailwindCSS = JSServe.Asset(dependency_path("tailwind.min.css"))
+const FormsCSS = Bonito.Asset(dependency_path("forms.min.css"))
+const TailwindCSS = Bonito.Asset(dependency_path("tailwind.min.css"))
 const AllCSS = (TailwindCSS, FormsCSS)
 
-const UtilitiesJS = JSServe.Dependency(
-    :utilities,
-    [dependency_path("utilities.js")]
-)
+const UtilitiesJS = Bonito.Asset(dependency_path("utilities.js"))
 
-const agGrid = JSServe.Dependency(
-    :agGrid,
-    [
-        dependency_path("ag-grid-community.min.noStyle.js"),
-        dependency_path("ag-grid.css"),
-        dependency_path("ag-grid-custom-theme.css"),
-    ]
-)
+const agGridAssets = [
+    Bonito.Asset(dependency_path("ag-grid-community.min.noStyle.js")),
+    Bonito.Asset(dependency_path("ag-grid.css")),
+    Bonito.Asset(dependency_path("ag-grid-custom-theme.css")),
+]
+const agGrid = agGridAssets[1]
 
-const ace = JSServe.Dependency(
-    :ace,
-    [
-        dependency_path("ace.js"),
-        dependency_path("ext-language_tools.js"),
-        dependency_path("mode-julia.js"),
-    ]
-)
+const aceAssets = [
+    Bonito.Asset(dependency_path("ace.js")),
+    Bonito.Asset(dependency_path("ext-language_tools.js")),
+    Bonito.Asset(dependency_path("mode-julia.js")),
+]
+const ace = aceAssets[1]
 
-const AllDeps = (UtilitiesJS, agGrid, ace)
+const AllDeps = [UtilitiesJS, agGridAssets..., aceAssets...]
 
 abstract type AbstractPipeline end
 abstract type AbstractVisualization end

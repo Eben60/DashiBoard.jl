@@ -13,7 +13,7 @@ function Filters(df)
             Option(string(name), RangeSelector(range), Observable(false))
         else
             unique = uniquesorted(v) # TODO: optimize for strings
-            options = [Option(string(val), val, Observable(true)) for val in unique]
+            options = [Option(string(val), val, true) for val in unique]
             Option(string(name), Checkboxes(options), Observable(false))
         end
         push!(selectors, selector)
@@ -33,7 +33,7 @@ function filter_column!(previous::AbstractVector{Bool}, v::AbstractVector, rg::R
     return previous
 end
 
-filter_column!(::Nothing, v::AbstractVector, rg) = filter_column!(fill(true, length(v)), v,  rg)
+filter_column!(::Nothing, v::AbstractVector, rg) = filter_column!(fill(true, length(v)), v, rg)
 
 function selected_data(f::Filters, table)
     data, options = Tables.columns(table), f.options

@@ -1,6 +1,6 @@
-struct RangeSelector{T <: AbstractRange, ET}
+struct RangeSelector{T<:AbstractRange,ET}
     range::T
-    selected::NTuple{2, Observable{ET}}
+    selected::NTuple{2,Observable{ET}}
     isoriginal::Observable{Bool}
 end
 
@@ -19,9 +19,9 @@ function reset!(wdg::RangeSelector)
     end
 end
 
-function jsrender(session::Session, rg::RangeSelector)
+function Bonito.jsrender(session::Session, rg::RangeSelector)
     range = rg.range
-    # FIXME: report to JSServe that passing observable to value does not work
+    # FIXME: report to Bonito that passing observable to value does not work
     inputs = map(rg.selected) do obs
         input = DOM.input(
             type="number",
@@ -31,20 +31,28 @@ function jsrender(session::Session, rg::RangeSelector)
             oninput=js"""
                 var val = parseFloat(this.value);
                 if (!isNaN(val)) {
-                    JSServe.update_obs($obs, val);
+                    Bonito.update_obs($obs, val);
                 }
             """ |> string
         )
-        onload(session, input, js"""
-            function (div) {
-                div.value = $(obs[]);
-            }
-        """)
-        onjs(session, obs, js"""
-            function (val) {
-                $(input).value = val;
-            }
-        """)
+        onload(
+            session,
+            input,
+            js"""
+    function (div) {
+        div.value = $(obs[]);
+    }
+"""
+        )
+        onjs(
+            session,
+            obs,
+            js"""
+    function (val) {
+        $(input).value = val;
+    }
+"""
+        )
         return input
     end
     return DOM.form(class="flex justify-between", inputs...)

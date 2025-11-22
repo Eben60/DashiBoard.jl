@@ -2,14 +2,14 @@ struct FilePicker{T}
     files::Observable{T}
 end
 
-function jsrender(session::Session, fp::FilePicker)
+function Bonito.jsrender(session::Session, fp::FilePicker)
     text = Observable{String}("no files selected")
     input = DOM.input(
         type="file",
         onchange=js"""
             $(UtilitiesJS).readFiles(this.files, $(fp.files));
             const text = [...this.files].map(file => file.name).join(' ');
-            text && JSServe.update_obs($(text), text);
+            text && Bonito.update_obs($(text), text);
         """,
         multiple=true,
         style="display:none;",

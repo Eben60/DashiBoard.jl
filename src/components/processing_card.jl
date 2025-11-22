@@ -15,7 +15,7 @@ struct StateTracker
 end
 
 function jsrender(session::Session, tracker::StateTracker)
-    class = map(session, tracker.state, tracker.edited, result=Observable{String}()) do state, edited
+    class = map(session, tracker.state, tracker.edited) do state, edited
         baseclass = "float-right text-2xl pr-4 inline-block"
         edited && return "$(baseclass) text-yellow-600"
         state == inactive && return "$(baseclass) text-transparent"
@@ -25,11 +25,15 @@ function jsrender(session::Session, tracker::StateTracker)
         throw(ArgumentError("Invalid state $state"))
     end
     ui = DOM.span("⬤", class=class[])
-    onjs(session, class, js"""
-        function (className) {
-            $(ui).className = className;
-        }
-    """)
+    onjs(
+        session,
+        class,
+        js"""
+    function (className) {
+        $(ui).className = className;
+    }
+"""
+    )
     return jsrender(session, ui)
 end
 
@@ -41,20 +45,24 @@ end
 function jsrender(session::Session, ec::ErrorContainer)
     p = DOM.p(ec.error[])
     ui = DOM.div(p; ec.hidden, class="p-8 bg-white border-2 border-red-800")
-    onjs(session, ec.error, js"""
-        function (value) {
-            $(p).innerText = value;
-        }
-    """)
+    onjs(
+        session,
+        ec.error,
+        js"""
+    function (value) {
+        $(p).innerText = value;
+    }
+"""
+    )
     return jsrender(session, ui)
 end
 
 struct ProcessingCard
     name::Symbol
     inputs::RichTextField
-    target::Union{RichTextField, Nothing}
+    target::Union{RichTextField,Nothing}
     outputs::RichTextField
-    method::Union{RichTextField, RichEditor}
+    method::Union{RichTextField,RichEditor}
     process_button::Button
     clear_button::Button
     state::Observable{State}
@@ -82,17 +90,17 @@ function clear!(card::ProcessingCard)
 end
 
 function ProcessingCard(name;
-                        inputs,
-                        target=nothing,
-                        outputs,
-                        method,
-                        process_button=Button("Process", class=buttonclass(true)),
-                        clear_button=Button("Clear", class=buttonclass(false)),
-                        state=Observable(inactive),
-                        edited=Observable(false),
-                        error=Observable(""),
-                        run=Observable(false),
-                        destroy = Observable(false))
+    inputs,
+    target=nothing,
+    outputs,
+    method,
+    process_button=Button("Process", class=buttonclass(true)),
+    clear_button=Button("Clear", class=buttonclass(false)),
+    state=Observable(inactive),
+    edited=Observable(false),
+    error=Observable(""),
+    run=Observable(false),
+    destroy=Observable(false))
 
     card = ProcessingCard(
         name,
@@ -109,12 +117,12 @@ function ProcessingCard(name;
         destroy
     )
 
-    on(_ ->  process!(card), process_button.value)
-    on(_ ->  clear!(card), clear_button.value)
+    on(_ -> process!(card), process_button.value)
+    on(_ -> clear!(card), clear_button.value)
     confirmed = map(autocompletes(card)) do textfield
         return lift(==, textfield.widget.value, textfield.confirmedvalue)
     end
-    map!(!all∘tuple, card.edited, confirmed...)
+    map!(!all ∘ tuple, card.edited, confirmed...)
 
     return card
 end
@@ -140,7 +148,7 @@ end
 
 function jsrender(session::Session, card::ProcessingCard)
     statetracker = StateTracker(card.state, card.edited)
-    hide_error = map(!=(errored), session, card.state, result=Observable{Bool}())
+    hide_error = map(!=(errored), session, card.state)
     errorcontainer = ErrorContainer(hide_error, card.error)
 
     card_ui = DOM.div(
@@ -148,7 +156,7 @@ function jsrender(session::Session, card::ProcessingCard)
         DOM.span(
             "✕",
             class="text-red-800 hover:text-red-900 text-2xl font-semibold float-right cursor-pointer",
-            onclick=js"JSServe.update_obs($(card.destroy), true)"
+            onclick=js"Bonito.update_obs($(card.destroy), true)"
         ),
         statetracker,
         autocompletes(card)...,

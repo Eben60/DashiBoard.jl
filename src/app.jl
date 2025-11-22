@@ -11,7 +11,7 @@ function Base.show(io::IO, ui::UI)
     print(io, "UI with pipelines $(p) and visualizations $(v)")
 end
 
-extract_options(sym::Union{Symbol, AbstractString}) = Symbol(sym), NamedTuple()
+extract_options(sym::Union{Symbol,AbstractString}) = Symbol(sym), NamedTuple()
 extract_options((sym, kwargs)::Pair) = Symbol(sym), kwargs
 
 function concatenate(tabs, names, value)
@@ -55,15 +55,13 @@ end
 function jsrender(session::Session, ui::UI)
     evaljs(session, js"document.body.classList.add('bg-gray-100');")
     # manually load all dependencies
-    for dep in AllDeps
-        JSServe.push!(session, dep)
-    end
     pipelinetabs, visualizationtabs = Tabs(ui.pipelinetabs), Tabs(ui.visualizationtabs)
     layout = DOM.div(
-            class="grid grid-cols-5 h-full",
-            DOM.div(class="col-span-2 pl-8", pipelinetabs),
-            DOM.div(class="col-span-3 pl-12 pr-8", visualizationtabs)
-        )
+        AllDeps...,
+        class="grid grid-cols-5 h-full",
+        DOM.div(class="col-span-2 pl-8", pipelinetabs),
+        DOM.div(class="col-span-3 pl-12 pr-8", visualizationtabs)
+    )
     return jsrender(session, layout)
 end
 
@@ -87,9 +85,9 @@ end
 
 Generate a [`UI`](@ref) with a given `table` and lists of pipeline and visualization tabs.
 Serve the output at the given `url` and `port`.
-Return a `JSServe.Server` object.
+Return a `Bonito.Server` object.
 """
 function serve(table; url=Sockets.localhost, port=8081, verbose=true,
-               pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
+    pipelinetabs=keys(PIPELINE_TABS), visualizationtabs=keys(VISUALIZATION_TABS))
     return Server(app(table; pipelinetabs, visualizationtabs), string(url), port; verbose)
 end

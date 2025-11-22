@@ -8,14 +8,14 @@ render_row_value(x::Missing) = "n/a"
 render_row_value(x::String) = x
 render_row_value(x) = string(x)
 
-function jsrender(session::Session, tabular::Tabular)
+function Bonito.jsrender(session::Session, tabular::Tabular)
     metadata = map(session, tabular.data) do data
         cols = Tables.columns(data)
         names = collect(Tables.columnnames(cols))
         columns = [map(render_row_value, Tables.getcolumn(cols, name)) for name in names]
         (; names, columns)
     end
-    JSServe.register_resource!(session, metadata)
+
 
     table_div = DOM.div(class="h-full")
     create_table = js"""
@@ -62,15 +62,19 @@ function jsrender(session::Session, tabular::Tabular)
             new $(agGrid).Grid(div, gridOptions);
         }
     """
-    onload(session, table_div, js"div => ($create_table)(div, JSServe.get_observable($metadata))")
-    onjs(session, metadata, js"""
-        function (m) {
-            const table_div = $(table_div);
-            while (table_div.firstChild) {
-                table_div.removeChild(table_div.lastChild);
-            }
-            ($create_table)(table_div, m);
+    onload(session, table_div, js"div => ($create_table)(div, Bonito.get_observable($metadata))")
+    onjs(
+        session,
+        metadata,
+        js"""
+    function (m) {
+        const table_div = $(table_div);
+        while (table_div.firstChild) {
+            table_div.removeChild(table_div.lastChild);
         }
-    """)
+        ($create_table)(table_div, m);
+    }
+"""
+    )
     return table_div
 end

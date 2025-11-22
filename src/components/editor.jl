@@ -1,4 +1,4 @@
-# adapted from https://github.com/SimonDanisch/JSServe.jl/blob/master/examples/editor.jl
+# adapted from https://github.com/SimonDanisch/Bonito.jl/blob/master/examples/editor.jl
 struct Editor
     value::Observable{String}
     language::Observable{String}
@@ -12,47 +12,51 @@ function Editor(value::Observable, language′, entries=SimpleList())
     return Editor(value, language, entries, style)
 end
 
-function jsrender(session::Session, editor::Editor)
+function Bonito.jsrender(session::Session, editor::Editor)
     # FIXME: currently, not everything updates when changing observables
     ui = DOM.div(editor.value[]; editor.style)
 
-    onload(session, ui, js"""
-        function (element){
-            const editor = $(ace).edit(element);
-            const language = $(editor.language[])
-            const langTools = $(ace).require("ace/ext/language_tools");
-            const langMode = $(ace).require("ace/mode/" + language);
-            const completers = $(editor.entries).map(function ({meta, words, score}) {
-                return {
-                    getCompletions: function (editor, session, pos, prefix, callback) {
-                        let wordList = JSServe.get_observable(words);
-                        callback(null, wordList.map(function(word) {
-                            return {
-                                caption: word,
-                                value: word,
-                                meta: meta || "",
-                                score: score || 0
-                            };
-                        }));
-                    }
-                };
-            });
-            editor.session.setMode("ace/mode/" + language);
-            editor.session.on("change", function () {
-                const value = editor.getValue();
-                JSServe.update_obs($(editor.value), value);
-            });
-            editor.setOptions({
-                enableLiveAutocompletion: true,
-                enableBasicAutocompletion: true,
-                enableSnippets: true,
-                fontSize: 18,
-            });
-            editor.completers.push(...completers);
-            editor.renderer.setShowGutter(false);
-            editor.setShowPrintMargin(false);
-        }
-    """)
+    onload(
+        session,
+        ui,
+        js"""
+    function (element){
+        const editor = $(ace).edit(element);
+        const language = $(editor.language[])
+        const langTools = $(ace).require("ace/ext/language_tools");
+        const langMode = $(ace).require("ace/mode/" + language);
+        const completers = $(editor.entries).map(function ({meta, words, score}) {
+            return {
+                getCompletions: function (editor, session, pos, prefix, callback) {
+                    let wordList = Bonito.get_observable(words);
+                    callback(null, wordList.map(function(word) {
+                        return {
+                            caption: word,
+                            value: word,
+                            meta: meta || "",
+                            score: score || 0
+                        };
+                    }));
+                }
+            };
+        });
+        editor.session.setMode("ace/mode/" + language);
+        editor.session.on("change", function () {
+            const value = editor.getValue();
+            Bonito.update_obs($(editor.value), value);
+        });
+        editor.setOptions({
+            enableLiveAutocompletion: true,
+            enableBasicAutocompletion: true,
+            enableSnippets: true,
+            fontSize: 18,
+        });
+        editor.completers.push(...completers);
+        editor.renderer.setShowGutter(false);
+        editor.setShowPrintMargin(false);
+    }
+"""
+    )
     return jsrender(session, ui)
 end
 
