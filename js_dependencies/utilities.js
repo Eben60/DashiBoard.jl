@@ -35,7 +35,7 @@ const utilities = (function () {
                 fileDict[n] = fileReader.result;
                 if (waiting && Object.keys(fileDict).length == nFiles) {
                     waiting = false;
-                    JSServe.update_obs(sink, fileDict);
+                    Bonito.update_obs(sink, fileDict);
                 }
             };
             fileReader.onerror = function () {
@@ -73,14 +73,14 @@ const utilities = (function () {
             (card.dataset.selected == "true") && _selected.push(card.dataset.id);
         }
 
-        JSServe.update_obs(selected, _selected);
+        Bonito.update_obs(selected, _selected);
     }
 
     // ref: https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio
     function trackPixelRatio(observable) {
         const updatePixelRatio = () => {
             let pr = window.devicePixelRatio;
-            JSServe.update_obs(observable, pr);
+            Bonito.update_obs(observable, pr);
             matchMedia(`(resolution: ${pr}dppx)`).addEventListener("change", updatePixelRatio, { once: true });
         }
         updatePixelRatio();
