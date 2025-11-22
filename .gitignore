@@ -6,3 +6,5 @@ app/Manifest.toml
 dev/
 docs/build
 /AppFolder/
+Manifest-v1.10.toml
+Manifest-v1.12.toml
